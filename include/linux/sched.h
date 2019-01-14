@@ -1735,23 +1735,6 @@ struct tlbflush_unmap_batch {
 	bool writable;
 };
 
-/*Ted, 20180425, non-exist dcache*/
-#define FILE_MAP_NUM            0x20
-#define FILE_MAP_MAX_INDEX	0x1F
-#define NEDF_PATH_MAX		504
-struct nedf {
-	size_t len;
-	char pathname[NEDF_PATH_MAX];
-};
-
-struct nedf_node {
-	u64 nf_tag;
-	struct nedf *nf;
-	uint16_t nf_cnt;
-	uint16_t nf_index;
-	bool is_valid;
-};
-
 struct task_struct {
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	/*
@@ -1767,8 +1750,6 @@ struct task_struct {
 	unsigned int ptrace;
 	unsigned int kill_flag;
 	struct timespec ttu;
-	int compensate_time;
-	int compensate_need;
 
     bool dump_fd_leak;
 
@@ -1845,12 +1826,6 @@ struct task_struct {
 #endif
 
 	struct list_head tasks;
-
-#ifdef CONFIG_ADJ_CHAIN
-	struct list_head adj_chain_tasks;
-	u32 adj_chain_status;
-#endif
-
 #ifdef CONFIG_SMP
 	struct plist_node pushable_tasks;
 	struct rb_node pushable_dl_tasks;
@@ -2275,14 +2250,6 @@ struct task_struct {
 	/* A live task holds one reference. */
 	atomic_t stack_refcount;
 #endif
-	u64 utask_tag;
-	u64 utask_tag_base;
-	int etask_claim;
-	int claim_cpu;
-	bool utask_slave;
-	/* Ted, 20180425, non-exist dcache*/
-	struct nedf_node *nn;
-	int hot_count;
 /* CPU-specific state of this task */
 	struct thread_struct thread;
 /*

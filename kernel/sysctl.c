@@ -1406,24 +1406,6 @@ static struct ctl_table vm_table[] = {
 		.extra2		= &two,
 	},
 	{
-		.procname	= "page_cache_reside_switch",
-		.data		= &sysctl_page_cache_reside_switch,
-		.maxlen		= sizeof(sysctl_page_cache_reside_switch),
-		.mode		= 0666,
-		.proc_handler	= proc_dointvec_minmax,
-		.extra1		= &zero,
-		.extra2		= &two,
-	},
-	{
-		.procname	= "page_cache_reside_max",
-		.data		= &sysctl_page_cache_reside_max,
-		.maxlen		= sizeof(sysctl_page_cache_reside_max),
-		.mode		= 0666,
-		.proc_handler	= proc_dointvec_minmax,
-	},
-
-
-	{
 		.procname	= "oom_kill_allocating_task",
 		.data		= &sysctl_oom_kill_allocating_task,
 		.maxlen		= sizeof(sysctl_oom_kill_allocating_task),
@@ -1529,21 +1511,6 @@ static struct ctl_table vm_table[] = {
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
 		.extra2		= &one_hundred,
-	},
-	{
-		.procname	= "breath_period",
-		.data		= &vm_breath_period,
-		.maxlen		= sizeof(vm_breath_period),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
-		.extra1		= &zero,
-	},
-	{
-		.procname	= "breath_priority",
-		.data		= &vm_breath_priority,
-		.maxlen		= sizeof(vm_breath_priority),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
 	},
 	{
 		.procname       = "want_old_faultaround_pte",
