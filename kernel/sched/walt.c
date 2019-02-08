@@ -822,11 +822,8 @@ void fixup_busy_time(struct task_struct *p, int new_cpu)
 
 	migrate_top_tasks(p, src_rq, dest_rq);
 
-	if (!same_freq_domain(new_cpu, task_cpu(p))) {
-		src_rq->notif_pending = true;
-		dest_rq->notif_pending = true;
+	if (!same_freq_domain(new_cpu, task_cpu(p)))
 		irq_work_queue(&walt_migration_irq_work);
-	}
 
 	if (p == src_rq->ed_task) {
 		src_rq->ed_task = NULL;
@@ -3117,11 +3114,10 @@ void walt_irq_work(struct irq_work *irq_work)
 	int cpu;
 	u64 wc;
 	int flag = SCHED_CPUFREQ_WALT;
-	bool is_migration = false;
 
 	/* Am I the window rollover work or the migration work? */
 	if (irq_work == &walt_migration_irq_work)
-		is_migration = true;
+		flag |= SCHED_CPUFREQ_INTERCLUSTER_MIG;
 
 	for_each_cpu(cpu, cpu_possible_mask)
 		raw_spin_lock(&cpu_rq(cpu)->lock);
@@ -3148,29 +3144,14 @@ void walt_irq_work(struct irq_work *irq_work)
 		raw_spin_unlock(&cluster->load_lock);
 	}
 
-	for_each_sched_cluster(cluster) {
-		for_each_cpu(cpu, &cluster->cpus) {
-			int nflag = flag;
-
-			rq = cpu_rq(cpu);
-
-			if (is_migration) {
-				if (rq->notif_pending) {
-					nflag |= SCHED_CPUFREQ_INTERCLUSTER_MIG;
-					rq->notif_pending = false;
-				} else {
-					nflag |= SCHED_CPUFREQ_FORCE_UPDATE;
-				}
-			}
-
-			cpufreq_update_util(rq, nflag);
-		}
-	}
+	for_each_sched_cluster(cluster)
+		for_each_cpu(cpu, &cluster->cpus)
+			cpufreq_update_util(cpu_rq(cpu), flag);
 
 	for_each_cpu(cpu, cpu_possible_mask)
 		raw_spin_unlock(&cpu_rq(cpu)->lock);
 
-	if (!is_migration)
+	if (irq_work != &walt_migration_irq_work)
 		core_ctl_check(this_rq()->window_start);
 }
 
@@ -3266,7 +3247,6 @@ void walt_sched_init(struct rq *rq)
 		clear_top_tasks_bitmap(rq->top_tasks_bitmap[j]);
 	}
 	rq->cum_window_demand = 0;
-	rq->notif_pending = false;
 
 	walt_cpu_util_freq_divisor =
 	    (sched_ravg_window >> SCHED_CAPACITY_SHIFT) * 100;
