@@ -7130,12 +7130,6 @@ retry:
 			}
 
 			/*
-			 * Consider only idle CPUs for active migration.
-			 */
-			if (p->state == TASK_RUNNING)
-				continue;
-
-			/*
 			 * Case C) Non latency sensitive tasks on ACTIVE CPUs.
 			 *
 			 * Pack tasks in the most energy efficient capacities.
