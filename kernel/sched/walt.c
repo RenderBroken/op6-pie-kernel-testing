@@ -847,7 +847,8 @@ void fixup_busy_time(struct task_struct *p, int new_cpu)
 
 	if (p == src_rq->ed_task) {
 		src_rq->ed_task = NULL;
-		dest_rq->ed_task = p;
+		if (!dest_rq->ed_task)
+			dest_rq->ed_task = p;
 	}
 
 done:
