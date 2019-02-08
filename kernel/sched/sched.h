@@ -1864,7 +1864,7 @@ cpu_util_freq_pelt(int cpu)
 }
 
 #ifdef CONFIG_SCHED_WALT
-extern u64 walt_load_reported_window;
+extern atomic64_t walt_irq_work_lastq_ws;
 
 static inline unsigned long
 cpu_util_freq_walt(int cpu, struct sched_walt_cpu_load *walt_load)
@@ -1902,7 +1902,7 @@ cpu_util_freq_walt(int cpu, struct sched_walt_cpu_load *walt_load)
 		walt_load->prev_window_util = util;
 		walt_load->nl = nl;
 		walt_load->pl = pl;
-		walt_load->ws = walt_load_reported_window;
+		walt_load->ws = atomic64_read(&walt_irq_work_lastq_ws);
 	}
 
 	return (util >= capacity) ? capacity : util;
