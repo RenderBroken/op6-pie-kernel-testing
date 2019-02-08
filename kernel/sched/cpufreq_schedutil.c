@@ -19,6 +19,10 @@
 #include "sched.h"
 #include "tune.h"
 
+#ifdef CONFIG_SCHED_WALT
+unsigned long boosted_cpu_util(int cpu);
+#endif
+
 #define SUGOV_KTHREAD_PRIORITY	50
 
 struct sugov_tunables {
@@ -178,7 +182,8 @@ static void sugov_get_util(unsigned long *util, unsigned long *max, int cpu)
 	*util = min(rq->cfs.avg.util_avg, cfs_max);
 	*max = cfs_max;
 
-	*util = boosted_cpu_util(cpu, &loadcpu->walt_load);
+	*util = cpu_util_freq(cpu, &loadcpu->walt_load);
+	*util = boosted_cpu_util(cpu);
 }
 
 static void sugov_set_iowait_boost(struct sugov_cpu *sg_cpu, u64 time,
