@@ -181,6 +181,7 @@ static inline int sched_cpu_high_irqload(int cpu)
 {
 	return sched_irqload(cpu) >= sysctl_sched_cpu_high_irqload;
 }
+#define walt_cpu_high_irqload(cpu) sched_cpu_high_irqload(cpu)
 
 static inline int exiting_task(struct task_struct *p)
 {
@@ -292,7 +293,7 @@ static inline int walt_start_cpu(int prev_cpu)
 
 static inline void walt_update_last_enqueue(struct task_struct *p)
 {
-	p->last_enqueued_ts = sched_ktime_clock();
+	p->last_enqueued_ts = ktime_get_ns();
 }
 extern void walt_rotate_work_init(void);
 extern void walt_rotation_checkpoint(int nr_big);
@@ -377,12 +378,6 @@ static inline int walt_start_cpu(int prev_cpu)
 	return prev_cpu;
 }
 
-static inline u64 sched_irqload(int cpu)
-{
-	return 0;
-}
 #endif /* CONFIG_SCHED_WALT */
-
-#define walt_cpu_high_irqload(cpu) sched_cpu_high_irqload(cpu)
 
 #endif

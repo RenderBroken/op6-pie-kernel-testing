@@ -1117,11 +1117,6 @@ enum sched_boost_policy {
 	SCHED_BOOST_ON_ALL,
 };
 
-#define NO_BOOST 0
-#define FULL_THROTTLE_BOOST 1
-#define CONSERVATIVE_BOOST 2
-#define RESTRAINED_BOOST 3
-
 /*
  * Returns the rq capacity of any rq in a group. This does not play
  * well with groups where rq capacity can change independently.
@@ -1864,7 +1859,7 @@ cpu_util_freq_pelt(int cpu)
 }
 
 #ifdef CONFIG_SCHED_WALT
-extern u64 walt_load_reported_window;
+extern atomic64_t walt_irq_work_lastq_ws;
 
 static inline unsigned long
 cpu_util_freq_walt(int cpu, struct sched_walt_cpu_load *walt_load)
@@ -1902,7 +1897,7 @@ cpu_util_freq_walt(int cpu, struct sched_walt_cpu_load *walt_load)
 		walt_load->prev_window_util = util;
 		walt_load->nl = nl;
 		walt_load->pl = pl;
-		walt_load->ws = walt_load_reported_window;
+		walt_load->ws = atomic64_read(&walt_irq_work_lastq_ws);
 	}
 
 	return (util >= capacity) ? capacity : util;
@@ -1921,9 +1916,6 @@ cpu_util_freq(int cpu, struct sched_walt_cpu_load *walt_load)
 {
 	return cpu_util_freq_pelt(cpu);
 }
-
-#define sched_ravg_window TICK_NSEC
-#define sysctl_sched_use_walt_cpu_util 0
 
 #endif /* CONFIG_SCHED_WALT */
 
@@ -2242,13 +2234,8 @@ static inline u64 irq_time_read(int cpu)
 #endif /* CONFIG_IRQ_TIME_ACCOUNTING */
 
 #ifdef CONFIG_SCHED_WALT
-u64 sched_ktime_clock(void);
 void note_task_waking(struct task_struct *p, u64 wallclock);
 #else /* CONFIG_SCHED_WALT */
-static inline u64 sched_ktime_clock(void)
-{
-	return 0;
-}
 static inline void note_task_waking(struct task_struct *p, u64 wallclock) { }
 #endif /* CONFIG_SCHED_WALT */
 
@@ -2289,7 +2276,7 @@ static inline void cpufreq_update_util(struct rq *rq, unsigned int flags)
 	data = rcu_dereference_sched(*per_cpu_ptr(&cpufreq_update_util_data,
 					cpu_of(rq)));
 	if (data)
-		data->func(data, sched_ktime_clock(), flags);
+		data->func(data, ktime_get_ns(), flags);
 }
 
 static inline void cpufreq_update_this_cpu(struct rq *rq, unsigned int flags)
@@ -2378,6 +2365,11 @@ extern int update_preferred_cluster(struct related_thread_group *grp,
 extern void set_preferred_cluster(struct related_thread_group *grp);
 extern void add_new_task_to_grp(struct task_struct *new);
 extern unsigned int update_freq_aggregate_threshold(unsigned int threshold);
+
+#define NO_BOOST 0
+#define FULL_THROTTLE_BOOST 1
+#define CONSERVATIVE_BOOST 2
+#define RESTRAINED_BOOST 3
 
 static inline int cpu_capacity(int cpu)
 {
@@ -2795,11 +2787,6 @@ static inline int cpu_max_power_cost(int cpu)
 #endif
 
 static inline void clear_walt_request(int cpu) { }
-
-static inline int is_reserved(int cpu)
-{
-	return 0;
-}
 
 static inline int got_boost_kick(void)
 {

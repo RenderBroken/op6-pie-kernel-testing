@@ -753,10 +753,6 @@ static void schedtune_attach(struct cgroup_taskset *tset)
 		sync_cgroup_colocation(task, colocate);
 
 }
-#else
-static void schedtune_attach(struct cgroup_taskset *tset)
-{
-}
 #endif
 
 static int
@@ -842,6 +838,7 @@ schedtune_boostgroup_init(struct schedtune *st)
 		bg = &per_cpu(cpu_boost_groups, cpu);
 		bg->group[st->idx].boost = 0;
 		bg->group[st->idx].tasks = 0;
+		raw_spin_lock_init(&bg->lock);
 	}
 
 	return 0;

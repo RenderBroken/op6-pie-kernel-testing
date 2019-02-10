@@ -246,7 +246,7 @@ static void sugov_calc_avg_cap(struct sugov_policy *sg_policy, u64 curr_ws,
 	if (unlikely(!sysctl_sched_use_walt_cpu_util))
 		return;
 
-	BUG_ON(curr_ws < last_ws);
+	WARN_ON(curr_ws < last_ws);
 	if (curr_ws <= last_ws)
 		return;
 
@@ -466,7 +466,7 @@ static void sugov_work(struct kthread_work *work)
 	mutex_lock(&sg_policy->work_lock);
 	raw_spin_lock_irqsave(&sg_policy->update_lock, flags);
 	sugov_track_cycles(sg_policy, sg_policy->policy->cur,
-			   sched_ktime_clock());
+			   ktime_get_ns());
 	raw_spin_unlock_irqrestore(&sg_policy->update_lock, flags);
 	__cpufreq_driver_target(sg_policy->policy, sg_policy->next_freq,
 				CPUFREQ_RELATION_L);
@@ -919,7 +919,7 @@ static void sugov_limits(struct cpufreq_policy *policy)
 		mutex_lock(&sg_policy->work_lock);
 		raw_spin_lock_irqsave(&sg_policy->update_lock, flags);
 		sugov_track_cycles(sg_policy, sg_policy->policy->cur,
-				   sched_ktime_clock());
+				   ktime_get_ns());
 		raw_spin_unlock_irqrestore(&sg_policy->update_lock, flags);
 		cpufreq_policy_apply_limits(policy);
 		mutex_unlock(&sg_policy->work_lock);
